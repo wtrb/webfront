@@ -43,10 +43,6 @@ func New(file string, pool time.Duration) (*Server, error) {
 		return nil, err
 	}
 
-	for _, r := range s.rules {
-		log.Printf("rule: %+v", r)
-	}
-
 	go s.refreshRules(file, pool)
 
 	return s, nil
