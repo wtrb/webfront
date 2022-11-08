@@ -33,6 +33,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // New constructs a Server that reads rules from file with a period
@@ -80,6 +82,7 @@ func (s *Server) handler(req *http.Request) http.Handler {
 	}
 	for _, r := range s.rules {
 		if h == r.Host || strings.HasSuffix(h, "."+r.Host) {
+			hitCounter.With(prometheus.Labels{"host": r.Host}).Inc()
 			return r.handler
 		}
 	}
