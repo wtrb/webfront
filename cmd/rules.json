@@ -1,0 +1,4 @@
+[
+    {"Host": "example.com", "Serve": "/var/www"},
+    {"Host": "localhost", "Forward": "localhost:8080"}
+]
