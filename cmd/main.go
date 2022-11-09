@@ -1,12 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/wtrb/webfront"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -14,6 +16,7 @@ var (
 	metricsAddr  = flag.String("metrics", "", "metrics HTTP listen `address`")
 	ruleFile     = flag.String("rules", "", "rule definition `file`")
 	pollInterval = flag.Duration("poll", 10*time.Second, "rule file poll `interval`")
+	letsCacheDir = flag.String("letsencrypt_cache", "", "letsencrypt cache `directory` (default is to disable HTTPS)")
 )
 
 func main() {
@@ -26,13 +29,29 @@ func main() {
 
 	if *metricsAddr != "" {
 		go func() {
-			if err := http.ListenAndServe(*metricsAddr, s.MetricsHandler()); err != nil {
-				log.Fatal(err)
-			}
+			log.Fatal(http.ListenAndServe(*metricsAddr, s.MetricsHandler()))
 		}()
 	}
 
-	if err := http.ListenAndServe(*httpAddr, s); err != nil {
-		log.Fatal(err)
+	if *letsCacheDir != "" {
+		m := &autocert.Manager{
+			Cache:      autocert.DirCache(*letsCacheDir),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: s.HostPolicy,
+		}
+		c := tls.Config{GetCertificate: m.GetCertificate}
+
+		l, err := tls.Listen("tcp", ":https", &c)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go func() {
+			log.Fatal(http.Serve(l, s))
+		}()
+
+		log.Fatal(http.ListenAndServe(*httpAddr, m.HTTPHandler(s)))
+	} else {
+		log.Fatal(http.ListenAndServe(*httpAddr, s))
 	}
 }

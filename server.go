@@ -27,6 +27,8 @@ webfront was written by Andrew Gerrand <adg@golang.org>
 package webfront
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -122,4 +124,19 @@ func (s *Server) loadRules(file string) error {
 	s.rules = rules
 
 	return nil
+}
+
+// hostPolicy implements autocert.HostPolicy by consulting
+// the rules list for a matching host name.
+func (s *Server) HostPolicy(ctx context.Context, host string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, r := range s.rules {
+		if host == r.Host || host == "www."+r.Host {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unrecognized host %q", host)
 }
