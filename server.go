@@ -30,6 +30,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -85,11 +86,30 @@ func (s *Server) handler(req *http.Request) http.Handler {
 	for _, r := range s.rules {
 		if h == r.Host || strings.HasSuffix(h, "."+r.Host) {
 			hitCounter.With(prometheus.Labels{"host": r.Host}).Inc()
+
+			voltageGauge.
+				With(
+					prometheus.Labels{
+						"country": "sg",
+						"site":    sites[rand.Intn(len(sites))],
+						"pv":      pvs[rand.Intn(len(pvs))],
+						"iv":      inverters[rand.Intn(len(inverters))],
+					},
+				).
+				Set(float64(rand.Intn(10)))
+				// Set(rand.Float64() * 100)
+
 			return r.handler
 		}
 	}
 	return nil
 }
+
+var (
+	sites     = [...]string{"rangoon", "rangaan"}
+	pvs       = [...]string{"pv A", "pv B"}
+	inverters = [...]string{"iv1", "iv2", "iv3"}
+)
 
 // refreshRules polls file periodically and refreshes the Server's rule
 // set if the file has been modified.

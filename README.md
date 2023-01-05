@@ -1,7 +1,10 @@
-https://go.dev/talks/2012/simple.slide#1
+Webfront is an HTTP server and reverse proxy.
+
+https://go.dev/talks/2012/simple.slide#29
 https://github.com/nf/webfront
 
 Prothemeus: https://pkg.go.dev/github.com/prometheus/client_golang/prometheus
+
 Let's Encrypt
 
 Run:
